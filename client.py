@@ -1,47 +1,31 @@
 import socket
 
+def help_decode(encoded_bytes,index):
+    d_length = int.from_bytes(encoded_bytes[index:index+4], byteorder='big')
+    index+=4
+    d = encoded_bytes[index:index+d_length].decode('utf-8')
+    index+=d_length
+    
+    return d, index
+
 def decode(encoded_bytes):
     decoded_dict = {}
     index = 0
 
     # To encode the question
     # Extract the key length (4 bytes) and convert it to an integer
-    key_length = int.from_bytes(encoded_bytes[index:index+4], byteorder='big')
-    index += 4
-
-    # Extract the key using the key_length
-    key = encoded_bytes[index:index+key_length].decode('utf-8')
-    index += key_length
+    key, index = help_decode(encoded_bytes, index)
 
     # Extract the value length (4 bytes) and convert it to an integer
-    value_length = int.from_bytes(encoded_bytes[index:index+4], byteorder='big')
-    index += 4
-
-    # Extract the value using the value_length
-    value = encoded_bytes[index:index+value_length].decode('utf-8')
-    index += value_length
-
+    value,index = help_decode(encoded_bytes, index)
     decoded_dict[key] = value
 
-    # to encode choices
+    # Encoding choices
     choices = []
-
-    key_length = int.from_bytes(encoded_bytes[index:index+4], byteorder='big')
-    index += 4
-
-    # Extract the key using the key_length
-    key = encoded_bytes[index:index+key_length].decode('utf-8')
-    index += key_length
-
+    key, index = help_decode(encoded_bytes, index)
     while index < len(encoded_bytes):
-        value_length = int.from_bytes(encoded_bytes[index:index+4], byteorder='big')
-        index += 4
-
-        # Extract the value using the value_length
-        value = encoded_bytes[index:index+value_length].decode('utf-8')
-        index += value_length
+        value, index = help_decode(encoded_bytes,index)
         choices.append(value)
-
     decoded_dict[key] = choices
 
     return decoded_dict
