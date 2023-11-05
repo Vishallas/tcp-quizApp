@@ -4,6 +4,7 @@
 import socket
 import threading
 import random
+import csv
 
 def comput_bytes(data):
     data_bytes = data.encode('utf-8')
@@ -44,17 +45,30 @@ def convertQtobQ(questions):
         bquestion.setdefault(i,encode(j))
     return bquestion
 
+def read_csv(file_name):
+    with open('test_csv.csv') as f:
+        k = csv.reader(f)
+        q = {}
+        next(k)
+        for row in k:
+            id = int(row[0])
+            ques = row[1]
+            chcs = row[2].split('*-/')
+            q.setdefault(id,{})
+            q[id].setdefault(q_KEY, ques)
+            q[id].setdefault(c_KEY, chcs)
+    return q
+
 def handle_client(client_socket):
     
     try:
-        # user_question="Enter your Name: "
-        # client_socket.send(user_question.encode('utf-8'))
-        # client_id = client_socket.recv(1024).decode('utf-8')
-        # print(f"{client_id} trys to connect...")
-
         client_id=client_socket.recv(1024).decode('utf-8')
 
         print(f'{client_id.upper()} connected')
+
+        f = open(f'ans_dist/{client_id.upper()}.csv', 'w', newline="")
+        k = csv.writer(f)
+        k.writerow(['q_id', 'ans'])
 
         # Initialize the client with no of questions
         client_socket.send(str(NO_OF_QUES).encode('utf-8'))
@@ -69,6 +83,8 @@ def handle_client(client_socket):
             c = int(client_socket.recv(1024).decode('utf-8')) 
 
             print(f'the {client_id} give the choice {c} for question {q_ID}.')
+
+            k.writerow([q_ID, c])
 
         print("%s completed." % client_id)
     except Exception as e:
@@ -88,49 +104,9 @@ c_KEY = 'choices'
 
 CLIENTS = ('21CS321', '21EE124','21EC231')
 
-questions = {
-    1: {
-        q_KEY: 'How are you',
-        c_KEY: ['fine', 'not bad', 'good', 'can\'t disclose']
-    },
-    2: {
-        q_KEY: 'What is your name',
-        c_KEY: ['Alice', 'Bob', 'Charlie', 'David']
-    },
-    3: {
-        q_KEY: 'Where are you from',
-        c_KEY: ['USA', 'Canada', 'UK', 'Australia']
-    },
-    4: {
-        q_KEY: 'Favorite color',
-        c_KEY: ['Red', 'Blue', 'Green', 'Yellow']
-    },
-    5: {
-        q_KEY: 'What is your favorite food',
-        c_KEY: ['Pizza', 'Burger', 'Sushi', 'Pasta']
-    },
-    6: {
-        q_KEY: 'How do you like to spend your weekends',
-        c_KEY: ['Reading', 'Hiking', 'Netflix', 'Gaming']
-    },
-    7: {
-        q_KEY: 'Favorite animal',
-        c_KEY: ['Dog', 'Cat', 'Dolphin', 'Elephant']
-    },
-    8: {
-        q_KEY: 'Favorite movie genre',
-        c_KEY: ['Action', 'Comedy', 'Drama', 'Science Fiction']
-    },
-    9: {
-        q_KEY: 'What\'s your dream travel destination',
-        c_KEY: ['Paris', 'Tokyo', 'Hawaii', 'New York']
-    },
-    10: {
-        q_KEY: 'What\'s your preferred way of transportation',
-        c_KEY: ['Car', 'Bicycle', 'Public Transit', 'Walking']
-    },
-    # Add more questions here as needed
-}
+FILE_NAME = 'test_csv.csv'
+
+questions = read_csv(FILE_NAME)
 
 bquestion = convertQtobQ(questions)
 q_IDs = list(questions.keys())
