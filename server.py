@@ -4,40 +4,75 @@
 import socket
 import threading
 import random
-import json
 
+
+def encode(data_dict):
+    encoded_bytes = b""  # Initialize an empty byte string
+
+    q_key = 'question'
+    value = data_dict[q_key]
+    # Encode the q_key and value as strings, separated by a delimiter (e.g., '|')
+    key_bytes = q_key.encode('utf-8')
+    value_bytes = str(value).encode('utf-8')
+
+    # Calculate the length of key and value, and convert to 4-byte integers
+    key_length = len(key_bytes)
+    value_length = len(value_bytes)
+
+    key_length_bytes = key_length.to_bytes(4, byteorder='big')
+    value_length_bytes = value_length.to_bytes(4, byteorder='big')
+
+    # Append the key length, key, value length, and value to the encoded bytes
+    encoded_bytes += key_length_bytes + key_bytes + value_length_bytes + value_bytes
+
+    c_key = 'choices'
+   
+    key_bytes = c_key.encode('utf-8')
+    key_length = len(key_bytes)
+    key_length_bytes = key_length.to_bytes(4, byteorder='big')
+    encoded_bytes += key_length_bytes + key_bytes
+
+    value = data_dict[c_key]
+    for c in value:
+        value_bytes = c.encode()
+        value_length = len(value_bytes)
+        value_length_bytes = value_length.to_bytes(4, byteorder='big')
+        encoded_bytes += value_length_bytes + value_bytes
+    
+    return encoded_bytes
 
 def convertQtobQ(questions):
     bquestion = {}
     for i,j in questions.items():
-        bquestion.setdefault(i,json.dumps(j).encode())
+        bquestion.setdefault(i,encode(j))
     return bquestion
 
 def handle_client(client_socket,client_addr):
     
-    # Username and file creation
-    user_question="Enter your Name: "
-    client_socket.send(user_question.encode())
-    username = client_socket.recv(1024).decode()
-    
-    print(f'{username} connected')
+    try:
+        # Username and file creation)
+        user_question="Enter your Name: "
+        client_socket.send(user_question.encode())
+        username = client_socket.recv(1024).decode()
 
-    client_socket.send(str(NO_OF_QUES).encode())
-    t_q_IDs = q_IDs.copy()
-    random.shuffle(t_q_IDs)
+        print(f'{username} connected')
 
-    for q_ID in random.sample(t_q_IDs,NO_OF_QUES):
-        # json_str = json.dumps(questions[q_ID])
-        # bytes_representation = json_str.encode()
+        client_socket.send(str(NO_OF_QUES).encode())
+        t_q_IDs = q_IDs.copy()
+        random.shuffle(t_q_IDs)
 
-        client_socket.send(bquestion[q_ID])
-        c = int(client_socket.recv(1024).decode())  
-        print(f'the {client_addr} give the choice {c} for question {q_ID}.')
+        for q_ID in random.sample(t_q_IDs,NO_OF_QUES):
+            # json_str = json.dumps(questions[q_ID])
+            # bytes_representation = json_str.encode()
 
-    client_socket.close()
-
-
-
+            client_socket.send(bquestion[q_ID])
+            c = int(client_socket.recv(1024).decode())  
+            print(f'the {client_addr} give the choice {c} for question {q_ID}.')
+        print("%s completed." % username)
+        client_socket.close()
+    except:
+        print("%s exits from test." % username)
+        client_socket.close()
 
 # IP and port number
 SERVER_HOST = '127.0.0.1'
