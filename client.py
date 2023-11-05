@@ -65,23 +65,31 @@ client_socket.connect((SERVER_HOST, SERVER_PORT))
 
 while True:
     try:
-        name_prompt = client_socket.recv(1024).decode()
-        print(name_prompt, end='')
+        # name_prompt = client_socket.recv(1024).decode('utf-8')
+        # print(name_prompt, end='')
 
-        name = input()
-        client_socket.send(name.encode())
-        NO_OF_QUES = int(client_socket.recv(1024).decode())
+       
+        name = input('Enter the id. : ')
+        client_socket.send(name.encode('utf-8'))
+        
+        print('Entering into the quiz....')
+        NO_OF_QUES = int(client_socket.recv(1024).decode('utf-8'))
+
         for i in range(NO_OF_QUES):
             data = client_socket.recv(1024)
             if data != '':
                 question = decode(data)
                 choice = pprint(question)
-                client_socket.send(str(choice).encode())
+                client_socket.send(str(choice).encode('utf-8'))
 
         client_socket.close()
         print("The test completed....")
         break
     except KeyboardInterrupt:
         print("Exited from test...")
+        client_socket.close()
+        break
+    except Exception as e:
+        print(e)
         client_socket.close()
         break
